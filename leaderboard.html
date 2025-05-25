@@ -26,15 +26,28 @@
       'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZpdXlic2NsaWZ4eGhucGtkY2ZqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDgxNDY0NDksImV4cCI6MjA2MzcyMjQ0OX0.FMM504dMKv8DclfPeGtZS7pLja0YY6d7ODgyeRdDZgg'
     );
 
-    const { data, error } = await supabase.rpc('top_leaders');
-
     const list = document.getElementById('list');
+    list.innerHTML = 'Загрузка...';
+
+    const { data: allUsers, error } = await supabase
+      .from("users")
+      .select("telegram_id, username, photo_url, referred_by");
+
     list.innerHTML = '';
 
     if (error) {
       list.innerHTML = 'Ошибка загрузки: ' + error.message;
     } else {
-      data.forEach((user, index) => {
+      const leaderboard = allUsers
+        .map(user => ({
+          ...user,
+          referrals: allUsers.filter(u => u.referred_by === user.telegram_id).length
+        }))
+        .filter(u => u.username)
+        .sort((a, b) => b.referrals - a.referrals)
+        .slice(0, 100);
+
+      leaderboard.forEach((user, index) => {
         const el = document.createElement('div');
         el.className = 'user';
         el.innerHTML = `
@@ -42,7 +55,7 @@
           <div class="user-info">
             <div>@${user.username || 'неизвестно'}</div>
             <div class="user-referrals">
-              ${user.referrals || 0}
+              ${user.referrals}
               ${index < 25 ? ' 🎁' : ''}
             </div>
           </div>
