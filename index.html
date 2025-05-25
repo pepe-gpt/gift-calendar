@@ -7,16 +7,35 @@
   <script src="https://telegram.org/js/telegram-web-app.js"></script>
   <script type="module" src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm"></script>
   <style>
-    body { font-family: sans-serif; padding: 20px; background: #f7f8fa; color: #333; }
-    h1 { font-size: 22px; text-align: center; margin-bottom: 10px; }
-    #countdown { font-size: 32px; text-align: center; margin-bottom: 30px; }
-    .profile { display: flex; align-items: center; flex-direction: column; margin-bottom: 20px; }
+    body { font-family: sans-serif; text-align: center; padding: 40px; background: #f7f8fa; }
+    h1 { font-size: 22px; margin-bottom: 10px; }
+    #countdown { font-size: 36px; margin-bottom: 30px; }
     .profile img { width: 64px; height: 64px; border-radius: 50%; margin-bottom: 10px; }
-    .ref-container { display: flex; align-items: center; gap: 8px; justify-content: center; margin-bottom: 20px; }
-    input.ref { padding: 8px; border-radius: 8px; border: 1px solid #ccc; width: 60%; }
-    button.icon-btn { background: #0088cc; color: white; border: none; border-radius: 8px; padding: 8px; cursor: pointer; display: flex; align-items: center; justify-content: center; }
-    button.icon-btn img { width: 20px; height: 20px; }
-    a.button { display: block; margin: 0 auto; padding: 10px 20px; background: #0088cc; color: white; border-radius: 8px; text-align: center; text-decoration: none; }
+    .invite-button {
+      display: inline-flex;
+      align-items: center;
+      background: #0088cc;
+      color: white;
+      padding: 10px 16px;
+      border: none;
+      border-radius: 8px;
+      font-size: 16px;
+      cursor: pointer;
+      margin-bottom: 20px;
+    }
+    .invite-button svg {
+      width: 20px;
+      height: 20px;
+      margin-left: 8px;
+    }
+    a.button {
+      display: inline-block;
+      padding: 10px 20px;
+      background: #0088cc;
+      color: white;
+      border-radius: 8px;
+      text-decoration: none;
+    }
   </style>
 </head>
 <body>
@@ -24,17 +43,18 @@
   <div id="countdown">Загрузка...</div>
 
   <div class="profile" id="profile" style="display:none;">
-    <img id="avatar" src="" alt="Аватар">
-    <div id="firstname"></div>
+    <img id="avatar" src="" />
+    <div id="name"></div>
   </div>
 
-  <div class="ref-container">
-    <input type="text" id="refLink" class="ref" readonly />
-    <button class="icon-btn" id="copyBtn"><img src="https://img.icons8.com/material-outlined/24/ffffff/copy.png" alt="Копировать"></button>
-    <button class="icon-btn" id="shareBtn"><img src="https://img.icons8.com/material-outlined/24/ffffff/telegram-app.png" alt="Поделиться"></button>
-  </div>
+  <button class="invite-button" id="copyBtn">
+    Пригласить
+    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-4 4h4a2 2 0 012 2v6a2 2 0 01-2 2h-8a2 2 0 01-2-2v-6a2 2 0 012-2z" />
+    </svg>
+  </button>
 
-  <a href="leaderboard.html" class="button">Таблица лидеров</a>
+  <br><a href="leaderboard.html" class="button">Таблица лидеров</a>
 
   <script type="module">
     import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm';
@@ -49,10 +69,8 @@
 
     const profile = document.getElementById('profile');
     const avatar = document.getElementById('avatar');
-    const firstnameEl = document.getElementById('firstname');
-    const refInput = document.getElementById('refLink');
+    const nameEl = document.getElementById('name');
     const copyBtn = document.getElementById('copyBtn');
-    const shareBtn = document.getElementById('shareBtn');
 
     const deadline = new Date("2025-06-01T00:00:00").getTime();
     const countdown = document.getElementById('countdown');
@@ -70,39 +88,34 @@
     tick();
 
     const user = tg.initDataUnsafe?.user;
+
     if (user) {
+      const fullName = [user.first_name, user.last_name].filter(Boolean).join(' ');
       avatar.src = user.photo_url;
-      firstnameEl.innerText = user.first_name;
-      profile.style.display = "flex";
-      refInput.value = `${window.location.origin}?ref=${user.id}`;
+      nameEl.innerText = fullName;
+      profile.style.display = "block";
 
+      const refLink = `https://t.me/GiftsCalendar_bot?start=${user.id}`;
       copyBtn.onclick = () => {
-        navigator.clipboard.writeText(refInput.value).then(() => alert("Скопировано!"));
-      };
-
-      shareBtn.onclick = () => {
-        tg.openTelegramLink(`https://t.me/share/url?url=${encodeURIComponent(refInput.value)}&text=Открой календарь подарков!`);
+        tg.switchInlineQuery(refLink);
       };
 
       const urlParams = new URLSearchParams(window.location.search);
-      const refId = urlParams.get("ref");
+      const refId = Number(urlParams.get("ref"));
 
-      // Сохраняем только если пользователь новый
-      const { data: existing } = await supabase.from("users").select("id").eq("telegram_id", user.id);
-      if (existing.length === 0) {
-        const { error } = await supabase
-          .from("users")
-          .insert({
-            telegram_id: user.id,
-            username: user.username,
-            photo_url: user.photo_url,
-            referred_by: refId && refId !== String(user.id) ? Number(refId) : null
-          });
+      const { data: existingUser } = await supabase.from("users").select("id").eq("telegram_id", user.id).single();
 
-        if (error) alert("Ошибка сохранения: " + error.message);
+      if (!existingUser && user.id !== refId) {
+        const { error } = await supabase.from("users").insert({
+          telegram_id: user.id,
+          username: user.username,
+          photo_url: user.photo_url,
+          referred_by: refId || null
+        });
+        if (error) console.error("Ошибка при сохранении:", error);
       }
     } else {
-      alert("❗ Открой мини-приложение через Telegram.");
+      alert("\u2757 Открой мини-приложение через Telegram. Данные не получены.");
     }
   </script>
 </body>
