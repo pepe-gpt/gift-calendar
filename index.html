@@ -148,10 +148,9 @@
         });
       };
 
-      // Вариант пересылки сообщения, отправленного ботом заранее
-      const MESSAGE_ID = 14;
       shareBtn.onclick = () => {
-        tg.openTelegramLink("https://t.me/GiftsCalendar_bot?start=share");
+        const shareText = `🎁 Попробуй выиграть стикеры, подарки и TON! Участвуй в календаре подарков: ${refLink}`;
+        tg.openTelegramLink(`https://t.me/share/url?url=${encodeURIComponent(refLink)}&text=${encodeURIComponent(shareText)}`);
       };
 
       const urlParams = new URLSearchParams(window.location.search);
@@ -178,10 +177,3 @@
   </script>
 </body>
 </html>
-
-    }
-  </script>
-</body>
-</html>
-
-
