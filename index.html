@@ -9,11 +9,9 @@
   <style>
     body {
       font-family: 'Segoe UI', sans-serif;
-      background: #f7f8fa;
       text-align: center;
-      padding: 40px 20px;
-      margin: 0;
-      color: #222;
+      padding: 30px 20px;
+      background: #f0f2f5;
     }
 
     h1 {
@@ -22,78 +20,77 @@
     }
 
     #countdown {
-      font-family: monospace;
       font-size: 40px;
       font-weight: bold;
-      color: #0088cc;
-      margin-bottom: 30px;
-    }
-
-    .profile {
-      margin-bottom: 30px;
+      margin-bottom: 25px;
+      color: #007bff;
     }
 
     .profile img {
-      width: 80px;
-      height: 80px;
+      width: 84px;
+      height: 84px;
       border-radius: 50%;
-      margin-bottom: 10px;
+      margin-bottom: 8px;
     }
 
-    .profile-name {
-      font-size: 18px;
-      font-weight: bold;
+    .profile #name {
+      font-size: 20px;
+      font-weight: 600;
+      margin-bottom: 20px;
     }
 
     .button-row {
       display: flex;
-      justify-content: center;
+      justify-content: space-between;
       gap: 10px;
-      margin-bottom: 20px;
-      flex-wrap: wrap;
+      margin-bottom: 15px;
     }
 
-    .button, .invite-button, .share-button {
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      min-width: 130px;
-      padding: 14px 20px;
+    .invite-button, .share-button {
+      flex: 1;
+      padding: 14px;
       font-size: 16px;
+      font-weight: bold;
       border-radius: 10px;
       border: none;
       cursor: pointer;
-      text-decoration: none;
-      transition: background 0.2s;
+      transition: background 0.3s;
+      display: flex;
+      align-items: center;
+      justify-content: center;
     }
 
     .invite-button {
-      background: #0088cc;
-      color: #fff;
-      flex-grow: 1;
-    }
-
-    .invite-button.copied {
-      background: #44c767;
+      background-color: #007bff;
+      color: white;
+      flex: 2;
     }
 
     .share-button {
-      width: 56px;
-      background: #0088cc;
+      background-color: #0088cc;
       color: white;
-      padding: 0;
+      flex: 1;
+      max-width: 70px;
     }
 
-    .share-button svg {
-      width: 24px;
-      height: 24px;
+    .copied {
+      background-color: #44c767 !important;
     }
 
-    .leaderboard-link {
-      background: #4a90e2;
-      color: white;
-      font-weight: bold;
+    .leaderboard-btn {
       width: 100%;
+      background-color: #337ab7;
+      color: white;
+      padding: 14px;
+      font-size: 16px;
+      font-weight: bold;
+      border: none;
+      border-radius: 10px;
+      cursor: pointer;
+    }
+
+    .leaderboard-btn:hover {
+      background-color: #2e6da4;
     }
   </style>
 </head>
@@ -103,20 +100,15 @@
 
   <div class="profile" id="profile" style="display:none;">
     <img id="avatar" src="" />
-    <div class="profile-name" id="name"></div>
+    <div id="name"></div>
   </div>
 
   <div class="button-row">
     <button class="invite-button" id="copyBtn">Пригласить</button>
-    <button class="share-button" id="shareBtn">
-      <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-          d="M15 8a3 3 0 11-6 0 3 3 0 016 0zm6 6a3 3 0 11-6 0 3 3 0 016 0zm-6 6a3 3 0 11-6 0 3 3 0 016 0z" />
-      </svg>
-    </button>
+    <button class="share-button" id="shareBtn">🔗</button>
   </div>
 
-  <a href="leaderboard.html" class="button leaderboard-link">Таблица лидеров</a>
+  <button class="leaderboard-btn" onclick="location.href='leaderboard.html'">Таблица лидеров</button>
 
   <script type="module">
     import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm';
@@ -126,24 +118,23 @@
 
     const supabase = createClient(
       'https://fiuybsclifxxhnpkdcfj.supabase.co',
-      'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...'
+      'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZpdXlic2NsaWZ4eGhucGtkY2ZqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDgxNDY0NDksImV4cCI6MjA2MzcyMjQ0OX0.FMM504dMKv8DclfPeGtZS7pLja0YY6d7ODgyeRdDZgg'
     );
 
+    const profile = document.getElementById('profile');
     const avatar = document.getElementById('avatar');
     const nameEl = document.getElementById('name');
-    const profile = document.getElementById('profile');
     const copyBtn = document.getElementById('copyBtn');
     const shareBtn = document.getElementById('shareBtn');
     const countdown = document.getElementById('countdown');
-
     const deadline = new Date("2025-06-01T00:00:00").getTime();
 
     const tick = () => {
       const now = new Date().getTime();
       const diff = deadline - now;
       if (diff <= 0) return countdown.innerText = "00:00:00";
-      const h = String(Math.floor((diff / 3600000) % 24)).padStart(2, '0');
-      const m = String(Math.floor((diff / 60000) % 60)).padStart(2, '0');
+      const h = String(Math.floor((diff / (1000 * 60 * 60)) % 24)).padStart(2, '0');
+      const m = String(Math.floor((diff / (1000 * 60)) % 60)).padStart(2, '0');
       const s = String(Math.floor((diff / 1000) % 60)).padStart(2, '0');
       countdown.innerText = `${h}:${m}:${s}`;
     };
@@ -151,28 +142,27 @@
     tick();
 
     const user = tg.initDataUnsafe?.user;
-
     if (user) {
-      const fullName = [user.first_name, user.last_name].filter(Boolean).join(' ') || user.username;
+      const fullName = [user.first_name, user.last_name].filter(Boolean).join(' ');
       avatar.src = user.photo_url;
       nameEl.innerText = fullName;
-      profile.style.display = 'block';
+      profile.style.display = "block";
 
-      const refLink = `https://t.me/GiftsCalendar_bot?startapp=ref${user.id}`;
+      const refLink = `https://t.me/GiftsCalendar_bot/miniapp?startapp=ref=${user.id}`;
 
       copyBtn.onclick = () => {
         navigator.clipboard.writeText(refLink).then(() => {
-          copyBtn.classList.add('copied');
+          copyBtn.classList.add("copied");
           copyBtn.innerText = 'Скопировано ✓';
           setTimeout(() => {
-            copyBtn.classList.remove('copied');
+            copyBtn.classList.remove("copied");
             copyBtn.innerText = 'Пригласить';
           }, 2000);
         });
       };
 
       shareBtn.onclick = () => {
-        tg.openTelegramLink(`https://t.me/share/url?url=${encodeURIComponent(refLink)}&text=${encodeURIComponent("🎁 Попробуй выиграть стикеры, подарки и TON в Календаре Подарков!")}`);
+        tg.openTelegramLink(`https://t.me/share/url?url=${encodeURIComponent(refLink)}&text=${encodeURIComponent("🎁 Попробуй выиграть стикеры, подарки и TON! Участвуй в календаре подарков.")}`);
       };
 
       const urlParams = new URLSearchParams(window.location.search);
@@ -185,14 +175,13 @@
         .single();
 
       if (!existingUser && user.id !== refId) {
-        await supabase.from("users").insert({
+        const { error } = await supabase.from("users").insert({
           telegram_id: user.id,
           username: user.username,
-          first_name: user.first_name,
-          last_name: user.last_name,
           photo_url: user.photo_url,
           referred_by: refId || null
         });
+        if (error) console.error("Ошибка при сохранении:", error);
       }
     } else {
       alert("❗ Открой мини-приложение через Telegram.");

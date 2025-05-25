@@ -1,36 +1,33 @@
-<!-- leaderboard.html -->
 <!DOCTYPE html>
 <html lang="ru">
 <head>
   <meta charset="UTF-8" />
-  <title>Топ лидеров</title>
+  <title>Топ 100 лидеров</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <script type="module" src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm"></script>
   <style>
     body {
       font-family: 'Segoe UI', sans-serif;
-      background-color: #f1f3f6;
-      padding: 20px;
+      background: #f0f2f5;
       margin: 0;
-      color: #333;
+      padding: 20px;
       max-width: 600px;
       margin-inline: auto;
     }
 
     h1 {
       text-align: center;
-      margin-bottom: 30px;
+      margin-bottom: 20px;
       font-size: 24px;
-      color: #222;
     }
 
     .back-button {
       position: fixed;
       top: 20px;
       left: 20px;
-      background: transparent;
+      background: none;
       border: none;
-      font-size: 24px;
+      font-size: 22px;
       cursor: pointer;
     }
 
@@ -48,32 +45,32 @@
       width: 56px;
       height: 56px;
       border-radius: 50%;
-      margin-right: 12px;
+      margin-right: 10px;
+      object-fit: cover;
+    }
+
+    .info {
+      flex-grow: 1;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+    }
+
+    .name {
+      font-weight: bold;
+    }
+
+    .refs {
+      font-size: 14px;
+      color: #333;
     }
 
     .rank {
-      font-size: 20px;
-      font-weight: bold;
-      width: 36px;
+      width: 28px;
+      font-size: 18px;
       text-align: center;
-      margin-right: 8px;
-    }
-
-    .user-info {
-      display: flex;
-      justify-content: space-between;
-      width: 100%;
-      align-items: center;
-    }
-
-    .user-name {
-      font-weight: bold;
-      font-size: 16px;
-    }
-
-    .user-referrals {
-      font-size: 14px;
-      white-space: nowrap;
+      margin-right: 10px;
     }
   </style>
 </head>
@@ -84,51 +81,45 @@
 
   <script type="module">
     import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm';
-
     const supabase = createClient(
       'https://fiuybsclifxxhnpkdcfj.supabase.co',
-      'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...'
+      'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZpdXlic2NsaWZ4eGhucGtkY2ZqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDgxNDY0NDksImV4cCI6MjA2MzcyMjQ0OX0.FMM504dMKv8DclfPeGtZS7pLja0YY6d7ODgyeRdDZgg'
     );
 
-    const list = document.getElementById('list');
-    list.innerHTML = 'Загрузка...';
+    const list = document.getElementById("list");
+    list.innerHTML = "Загрузка...";
 
     try {
-      const { data: allUsers } = await supabase
-        .from("users")
-        .select("telegram_id, username, first_name, last_name, photo_url, referred_by");
+      const { data: users, error } = await supabase.from("users").select("*");
+      if (error || !users) throw error;
 
-      const leaderboard = allUsers
+      const leaders = users
         .map(user => ({
           ...user,
           name: [user.first_name, user.last_name].filter(Boolean).join(" ") || user.username || "Без имени",
-          referrals: allUsers.filter(u => u.referred_by === user.telegram_id).length
+          refs: users.filter(u => u.referred_by === user.telegram_id).length
         }))
-        .filter(u => u.telegram_id)
-        .sort((a, b) => b.referrals - a.referrals)
+        .sort((a, b) => b.refs - a.refs)
         .slice(0, 100);
 
-      list.innerHTML = '';
+      list.innerHTML = "";
 
-      leaderboard.forEach((user, index) => {
-        const place = index + 1;
-        const trophy = place === 1 ? '🥇' : place === 2 ? '🥈' : place === 3 ? '🥉' : place;
-
-        const el = document.createElement('div');
-        el.className = 'user';
+      leaders.forEach((u, i) => {
+        const el = document.createElement("div");
+        el.className = "user";
+        const rank = i + 1 <= 3 ? ["🥇","🥈","🥉"][i] : i + 1;
         el.innerHTML = `
-          <div class="rank">${trophy}</div>
-          <img src="${user.photo_url || 'https://via.placeholder.com/56'}" />
-          <div class="user-info">
-            <div class="user-name">${user.name}</div>
-            <div class="user-referrals">👥 ${user.referrals} ${index < 25 ? '🎁' : ''}</div>
+          <div class="rank">${rank}</div>
+          <img src="${u.photo_url || 'https://via.placeholder.com/56'}" />
+          <div class="info">
+            <div class="name">${u.name}</div>
+            <div class="refs">👥 ${u.refs}</div>
           </div>
         `;
         list.appendChild(el);
       });
-    } catch (err) {
-      console.error(err);
-      list.innerHTML = 'Ошибка загрузки: ' + err.message;
+    } catch (e) {
+      list.innerText = "Ошибка загрузки: " + e.message;
     }
   </script>
 </body>
