@@ -62,19 +62,20 @@
     setInterval(tick, 1000);
     tick();
 
-    (async () => {
-      const user = tg.initDataUnsafe?.user;
+    const user = tg.initDataUnsafe?.user;
 
-      if (user) {
-        avatar.src = user.photo_url;
-        usernameEl.innerText = "@" + user.username;
-        useridEl.innerText = user.id;
-        profile.style.display = "block";
-        refInput.value = `${window.location.origin}?ref=${user.id}`;
+    if (user) {
+      avatar.src = user.photo_url;
+      usernameEl.innerText = "@" + user.username;
+      useridEl.innerText = user.id;
+      profile.style.display = "block";
+      refInput.value = `${window.location.origin}?ref=${user.id}`;
 
-        const urlParams = new URLSearchParams(window.location.search);
-        const refId = urlParams.get("ref");
+      const urlParams = new URLSearchParams(window.location.search);
+      const refId = urlParams.get("ref");
 
+      // Обёртка в async-функцию
+      (async () => {
         const { error } = await supabase
           .from("users")
           .upsert({
@@ -84,11 +85,16 @@
             referred_by: refId ? Number(refId) : null
           }, { onConflict: ['telegram_id'] });
 
-        if (error) console.error("Ошибка при сохранении в Supabase:", error);
-      } else {
-        alert("Ошибка: не удалось получить данные Telegram.");
-      }
-    })();
+        if (error) {
+          console.error("❌ Ошибка при сохранении в Supabase:", error);
+          alert("Ошибка сохранения в Supabase: " + error.message);
+        } else {
+          console.log("✅ Пользователь успешно сохранён в Supabase");
+        }
+      })();
+    } else {
+      alert("❗ Открой мини-приложение через Telegram. Данные не получены.");
+    }
   </script>
 </body>
 </html>
