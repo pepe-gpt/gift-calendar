@@ -130,7 +130,12 @@
       nameEl.innerText = fullName;
       profile.style.display = "block";
 
-      const refLink = `https://t.me/GiftsCalendar_bot?start=${user.id}`;
+      const refLink = `https://t.me/${tg.initDataUnsafe?.user?.username || ''}?startapp=ref${user.id}`;
+
+      shareBtn.onclick = () => {
+       tg.openTelegramLink(`https://t.me/share/inline?bot=GiftsCalendar_bot&message_id=6`);
+      };
+
 
       // Копировать ссылку и показать галочку
       copyBtn.onclick = () => {
