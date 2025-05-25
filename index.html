@@ -63,7 +63,6 @@
     tick();
 
     const user = tg.initDataUnsafe?.user;
-
     if (user) {
       avatar.src = user.photo_url;
       usernameEl.innerText = "@" + user.username;
@@ -74,7 +73,6 @@
       const urlParams = new URLSearchParams(window.location.search);
       const refId = urlParams.get("ref");
 
-      // Обёртка в async-функцию
       (async () => {
         const { error } = await supabase
           .from("users")
@@ -86,14 +84,13 @@
           }, { onConflict: ['telegram_id'] });
 
         if (error) {
-          console.error("❌ Ошибка при сохранении в Supabase:", error);
-          alert("Ошибка сохранения в Supabase: " + error.message);
+          console.warn("⚠️ Supabase error (можно скрыть):", error.message);
         } else {
-          console.log("✅ Пользователь успешно сохранён в Supabase");
+          console.log("✅ Пользователь сохранён");
         }
       })();
     } else {
-      alert("❗ Открой мини-приложение через Telegram. Данные не получены.");
+      console.error("❗ Нет данных пользователя из Telegram");
     }
   </script>
 </body>
