@@ -7,12 +7,16 @@
   <script src="https://telegram.org/js/telegram-web-app.js"></script>
   <script type="module" src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm"></script>
   <style>
-    body { font-family: sans-serif; text-align: center; padding: 40px; background: #f7f8fa; }
-    h1 { font-size: 22px; margin-bottom: 10px; }
-    #countdown { font-size: 36px; margin-bottom: 30px; }
+    body { font-family: sans-serif; padding: 20px; background: #f7f8fa; color: #333; }
+    h1 { font-size: 22px; text-align: center; margin-bottom: 10px; }
+    #countdown { font-size: 32px; text-align: center; margin-bottom: 30px; }
+    .profile { display: flex; align-items: center; flex-direction: column; margin-bottom: 20px; }
     .profile img { width: 64px; height: 64px; border-radius: 50%; margin-bottom: 10px; }
-    input { padding: 8px; width: 90%; margin-bottom: 20px; border-radius: 8px; border: 1px solid #ccc; }
-    a.button { display: inline-block; padding: 10px 20px; background: #0088cc; color: white; border-radius: 8px; text-decoration: none; }
+    .ref-container { display: flex; align-items: center; gap: 8px; justify-content: center; margin-bottom: 20px; }
+    input.ref { padding: 8px; border-radius: 8px; border: 1px solid #ccc; width: 60%; }
+    button.icon-btn { background: #0088cc; color: white; border: none; border-radius: 8px; padding: 8px; cursor: pointer; display: flex; align-items: center; justify-content: center; }
+    button.icon-btn img { width: 20px; height: 20px; }
+    a.button { display: block; margin: 0 auto; padding: 10px 20px; background: #0088cc; color: white; border-radius: 8px; text-align: center; text-decoration: none; }
   </style>
 </head>
 <body>
@@ -20,15 +24,17 @@
   <div id="countdown">Загрузка...</div>
 
   <div class="profile" id="profile" style="display:none;">
-    <img id="avatar" src="" />
-    <div id="username">@username</div>
-    <div>ID: <span id="userid">-</span></div>
+    <img id="avatar" src="" alt="Аватар">
+    <div id="firstname"></div>
   </div>
 
-  <p>Ваша реферальная ссылка:</p>
-  <input type="text" id="refLink" readonly />
+  <div class="ref-container">
+    <input type="text" id="refLink" class="ref" readonly />
+    <button class="icon-btn" id="copyBtn"><img src="https://img.icons8.com/material-outlined/24/ffffff/copy.png" alt="Копировать"></button>
+    <button class="icon-btn" id="shareBtn"><img src="https://img.icons8.com/material-outlined/24/ffffff/telegram-app.png" alt="Поделиться"></button>
+  </div>
 
-  <br><a href="leaderboard.html" class="button">Таблица лидеров</a>
+  <a href="leaderboard.html" class="button">Таблица лидеров</a>
 
   <script type="module">
     import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm';
@@ -43,9 +49,10 @@
 
     const profile = document.getElementById('profile');
     const avatar = document.getElementById('avatar');
-    const usernameEl = document.getElementById('username');
-    const useridEl = document.getElementById('userid');
+    const firstnameEl = document.getElementById('firstname');
     const refInput = document.getElementById('refLink');
+    const copyBtn = document.getElementById('copyBtn');
+    const shareBtn = document.getElementById('shareBtn');
 
     const deadline = new Date("2025-06-01T00:00:00").getTime();
     const countdown = document.getElementById('countdown');
@@ -65,32 +72,37 @@
     const user = tg.initDataUnsafe?.user;
     if (user) {
       avatar.src = user.photo_url;
-      usernameEl.innerText = "@" + user.username;
-      useridEl.innerText = user.id;
-      profile.style.display = "block";
+      firstnameEl.innerText = user.first_name;
+      profile.style.display = "flex";
       refInput.value = `${window.location.origin}?ref=${user.id}`;
+
+      copyBtn.onclick = () => {
+        navigator.clipboard.writeText(refInput.value).then(() => alert("Скопировано!"));
+      };
+
+      shareBtn.onclick = () => {
+        tg.openTelegramLink(`https://t.me/share/url?url=${encodeURIComponent(refInput.value)}&text=Открой календарь подарков!`);
+      };
 
       const urlParams = new URLSearchParams(window.location.search);
       const refId = urlParams.get("ref");
 
-      (async () => {
+      // Сохраняем только если пользователь новый
+      const { data: existing } = await supabase.from("users").select("id").eq("telegram_id", user.id);
+      if (existing.length === 0) {
         const { error } = await supabase
           .from("users")
-          .upsert({
+          .insert({
             telegram_id: user.id,
             username: user.username,
             photo_url: user.photo_url,
-            referred_by: refId ? Number(refId) : null
-          }, { onConflict: ['telegram_id'] });
+            referred_by: refId && refId !== String(user.id) ? Number(refId) : null
+          });
 
-        if (error) {
-          console.warn("⚠️ Supabase error (можно скрыть):", error.message);
-        } else {
-          console.log("✅ Пользователь сохранён");
-        }
-      })();
+        if (error) alert("Ошибка сохранения: " + error.message);
+      }
     } else {
-      console.error("❗ Нет данных пользователя из Telegram");
+      alert("❗ Открой мини-приложение через Telegram.");
     }
   </script>
 </body>
