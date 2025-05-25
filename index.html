@@ -169,8 +169,13 @@
         tg.openTelegramLink(`https://t.me/share/url?url=${encodeURIComponent(refLink)}&text=${encodeURIComponent("🎁 Попробуй выиграть стикеры, NFT и TON! Участвуй в календаре подарков.")}`);
       };
 
+      let refId = null;
       const urlParams = new URLSearchParams(window.location.search);
-      const refId = Number(urlParams.get("ref"));
+      const raw = urlParams.get("startapp");
+      if (raw?.startsWith("ref=")) {
+        refId = Number(raw.replace("ref=", ""));
+      }
+
 
       const { data: existingUser } = await supabase
         .from("users")
