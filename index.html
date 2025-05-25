@@ -130,14 +130,8 @@
       nameEl.innerText = fullName;
       profile.style.display = "block";
 
-      const refLink = `https://t.me/${tg.initDataUnsafe?.user?.username || ''}?startapp=ref${user.id}`;
+      const refLink = `https://t.me/GiftsCalendar_bot?startapp=ref${user.id}`;
 
-      shareBtn.onclick = () => {
-       tg.openTelegramLink(`https://t.me/share/inline?bot=GiftsCalendar_bot&message_id=6`);
-      };
-
-
-      // Копировать ссылку и показать галочку
       copyBtn.onclick = () => {
         navigator.clipboard.writeText(refLink).then(() => {
           copyBtn.classList.add("copied");
@@ -152,9 +146,8 @@
         });
       };
 
-      // Поделиться ссылкой через Telegram
       shareBtn.onclick = () => {
-        tg.openTelegramLink(`https://t.me/share/url?url=${encodeURIComponent(refLink)}&text=${encodeURIComponent("🎁 Попробуй выиграть стикеры, подарки и TON!")}`);
+        tg.openTelegramLink(`https://t.me/GiftsCalendar_bot?startapp=ref${user.id}`);
       };
 
       const urlParams = new URLSearchParams(window.location.search);
@@ -177,4 +170,3 @@
   </script>
 </body>
 </html>
-
