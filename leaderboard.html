@@ -1,25 +1,55 @@
-
 <!DOCTYPE html>
 <html lang="ru">
 <head>
   <meta charset="UTF-8" />
   <title>Таблица лидеров</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <script type="module" src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm"></script>
   <style>
-    body { font-family: sans-serif; padding: 20px; background: #fff; }
-    h1 { text-align: center; }
-    .leader { margin: 10px 0; font-size: 18px; }
-    .back { margin-top: 20px; display: block; text-align: center; }
-    .question { float: right; font-size: 20px; cursor: pointer; }
+    body { font-family: sans-serif; padding: 20px; background: #f7f8fa; }
+    h1 { text-align: center; margin-bottom: 20px; }
+    .user { display: flex; align-items: center; margin-bottom: 12px; padding: 10px; background: #fff; border-radius: 8px; box-shadow: 0 0 4px rgba(0,0,0,0.1); }
+    .user img { width: 48px; height: 48px; border-radius: 50%; margin-right: 12px; }
+    .user-info { flex-grow: 1; }
+    .user-referrals { font-weight: bold; }
   </style>
 </head>
 <body>
-  <h1>Таблица лидеров <span class="question" title="За топ-25 — призы!">?</span></h1>
-  <div class="leader">1. @alpha — 15 👥 🎁</div>
-  <div class="leader">2. @bravo — 13 👥 🎁</div>
-  <div class="leader">3. @charlie — 10 👥 🎁</div>
-  <div class="leader">4. @delta — 8 👥 🎁</div>
-  <div class="leader">5. @echo — 7 👥 🎁</div>
-  <a class="back" href="index.html">← Назад</a>
+  <h1>🏆 Топ 100 лидеров</h1>
+  <div id="list">Загрузка...</div>
+
+  <script type="module">
+    import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm';
+
+    const supabase = createClient(
+      'https://fiuybsclifxxhnpkdcfj.supabase.co',
+      'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZpdXlic2NsaWZ4eGhucGtkY2ZqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDgxNDY0NDksImV4cCI6MjA2MzcyMjQ0OX0.FMM504dMKv8DclfPeGtZS7pLja0YY6d7ODgyeRdDZgg'
+    );
+
+    const { data, error } = await supabase.rpc('top_leaders');
+
+    const list = document.getElementById('list');
+    list.innerHTML = '';
+
+    if (error) {
+      list.innerHTML = 'Ошибка загрузки: ' + error.message;
+    } else {
+      data.forEach((user, index) => {
+        const el = document.createElement('div');
+        el.className = 'user';
+        el.innerHTML = `
+          <img src="${user.photo_url || 'https://via.placeholder.com/48'}" alt="">
+          <div class="user-info">
+            <div>@${user.username || 'неизвестно'}</div>
+            <div class="user-referrals">
+              ${user.referrals || 0}
+              ${index < 25 ? ' 🎁' : ''}
+            </div>
+          </div>
+        `;
+        list.appendChild(el);
+      });
+    }
+  </script>
 </body>
 </html>
