@@ -1,0 +1,69 @@
+
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8" />
+  <title>Календарь подарков</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <script src="https://telegram.org/js/telegram-web-app.js"></script>
+  <style>
+    body { font-family: sans-serif; text-align: center; padding: 40px; background: #f5f7fa; }
+    h1 { margin-bottom: 10px; }
+    h2 { font-size: 2.5em; margin-top: 0; }
+    .input { padding: 8px; width: 80%; }
+    .button { margin: 20px auto; padding: 10px 20px; font-size: 16px; cursor: pointer; }
+    .profile { margin: 20px 0; }
+    img { border-radius: 50%; width: 64px; height: 64px; }
+  </style>
+</head>
+<body>
+  <h1>До запуска осталось:</h1>
+  <h2 id="countdown">--:--:--</h2>
+
+  <div class="profile" id="profile" style="display: none;">
+    <img id="userPic" src="" alt="avatar" /><br />
+    <b id="userName">@username</b><br />
+    <small>ID: <span id="userId"></span></small>
+  </div>
+
+  <p>Ваша реферальная ссылка:</p>
+  <input class="input" type="text" id="refLink" readonly />
+  <div>
+    <a href="leaderboard.html" class="button">Таблица лидеров</a>
+  </div>
+
+  <script>
+    const deadline = new Date("2025-06-01T00:00:00").getTime();
+    const countdown = document.getElementById("countdown");
+    const refLink = document.getElementById("refLink");
+
+    function updateTimer() {
+      const now = new Date().getTime();
+      const distance = deadline - now;
+      if (distance <= 0) {
+        countdown.innerText = "00:00:00";
+        return;
+      }
+      const h = String(Math.floor((distance / (1000 * 60 * 60)) % 24)).padStart(2, '0');
+      const m = String(Math.floor((distance / (1000 * 60)) % 60)).padStart(2, '0');
+      const s = String(Math.floor((distance / 1000) % 60)).padStart(2, '0');
+      countdown.innerText = `${h}:${m}:${s}`;
+    }
+
+    setInterval(updateTimer, 1000);
+    updateTimer();
+
+    const tg = window.Telegram.WebApp;
+    if (tg && tg.initDataUnsafe?.user) {
+      const user = tg.initDataUnsafe.user;
+      document.getElementById("profile").style.display = "block";
+      document.getElementById("userName").innerText = user.username ? `@${user.username}` : user.first_name;
+      document.getElementById("userId").innerText = user.id;
+      document.getElementById("userPic").src = user.photo_url || "";
+      refLink.value = `${window.location.origin}/index.html?ref=${user.id}`;
+    } else {
+      refLink.value = `${window.location.href.split('?')[0]}?ref=123456789`;
+    }
+  </script>
+</body>
+</html>
