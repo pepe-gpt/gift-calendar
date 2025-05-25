@@ -72,14 +72,19 @@
       if (error) console.error("Ошибка сохранения:", error);
     }
 
-    Telegram.WebApp.getUser().then((user) => {
-      avatar.src = user.photo_url;
-      usernameEl.innerText = "@" + user.username;
-      useridEl.innerText = user.id;
-      profile.style.display = "block";
-      refInput.value = `${window.location.origin}?ref=${user.id}`;
-      saveUser(user);
-    });
+    const user = Telegram.WebApp.initDataUnsafe.user;
+
+if (user) {
+  avatar.src = user.photo_url;
+  usernameEl.innerText = "@" + user.username;
+  useridEl.innerText = user.id;
+  profile.style.display = "block";
+  refInput.value = `${window.location.origin}?ref=${user.id}`;
+  saveUser(user);
+} else {
+  alert("Ошибка: пользователь не найден. Открой мини-апп через Telegram.");
+}
+
   </script>
 </body>
 </html>
