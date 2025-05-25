@@ -151,7 +151,7 @@
       // Вариант пересылки сообщения, отправленного ботом заранее
       const MESSAGE_ID = 14;
       shareBtn.onclick = () => {
-        tg.openTelegramLink(`https://t.me/share/inline?bot=GiftsCalendar_bot&message_id=${MESSAGE_ID}`);
+        tg.switchInlineQuery(`ref${user.id}`);
       };
 
       const urlParams = new URLSearchParams(window.location.search);
