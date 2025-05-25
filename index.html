@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="ru">
 <head>
@@ -6,64 +5,81 @@
   <title>Календарь подарков</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <script src="https://telegram.org/js/telegram-web-app.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.39.5/+esm"></script>
   <style>
-    body { font-family: sans-serif; text-align: center; padding: 40px; background: #f5f7fa; }
-    h1 { margin-bottom: 10px; }
-    h2 { font-size: 2.5em; margin-top: 0; }
-    .input { padding: 8px; width: 80%; }
-    .button { margin: 20px auto; padding: 10px 20px; font-size: 16px; cursor: pointer; }
-    .profile { margin: 20px 0; }
-    img { border-radius: 50%; width: 64px; height: 64px; }
+    body { font-family: sans-serif; text-align: center; padding: 40px; background: #f7f8fa; }
+    h1 { font-size: 22px; margin-bottom: 10px; }
+    #countdown { font-size: 36px; margin-bottom: 30px; }
+    .profile img { width: 64px; height: 64px; border-radius: 50%; margin-bottom: 10px; }
+    input { padding: 8px; width: 90%; margin-bottom: 20px; border-radius: 8px; border: 1px solid #ccc; }
+    a.button { display: inline-block; padding: 10px 20px; background: #0088cc; color: white; border-radius: 8px; text-decoration: none; }
   </style>
 </head>
 <body>
   <h1>До запуска осталось:</h1>
-  <h2 id="countdown">--:--:--</h2>
+  <div id="countdown">Загрузка...</div>
 
-  <div class="profile" id="profile" style="display: none;">
-    <img id="userPic" src="" alt="avatar" /><br />
-    <b id="userName">@username</b><br />
-    <small>ID: <span id="userId"></span></small>
+  <div class="profile" id="profile" style="display:none;">
+    <img id="avatar" src="" />
+    <div id="username">@username</div>
+    <div>ID: <span id="userid">-</span></div>
   </div>
 
   <p>Ваша реферальная ссылка:</p>
-  <input class="input" type="text" id="refLink" readonly />
-  <div>
-    <a href="leaderboard.html" class="button">Таблица лидеров</a>
-  </div>
+  <input type="text" id="refLink" readonly />
 
-  <script>
-    const deadline = new Date("2025-06-01T00:00:00").getTime();
-    const countdown = document.getElementById("countdown");
-    const refLink = document.getElementById("refLink");
+  <br><a href="leaderboard.html" class="button">Таблица лидеров</a>
 
-    function updateTimer() {
-      const now = new Date().getTime();
-      const distance = deadline - now;
-      if (distance <= 0) {
-        countdown.innerText = "00:00:00";
-        return;
-      }
-      const h = String(Math.floor((distance / (1000 * 60 * 60)) % 24)).padStart(2, '0');
-      const m = String(Math.floor((distance / (1000 * 60)) % 60)).padStart(2, '0');
-      const s = String(Math.floor((distance / 1000) % 60)).padStart(2, '0');
-      countdown.innerText = `${h}:${m}:${s}`;
-    }
-
-    setInterval(updateTimer, 1000);
-    updateTimer();
-
+  <script type="module">
     const tg = window.Telegram.WebApp;
-    if (tg && tg.initDataUnsafe?.user) {
-      const user = tg.initDataUnsafe.user;
-      document.getElementById("profile").style.display = "block";
-      document.getElementById("userName").innerText = user.username ? `@${user.username}` : user.first_name;
-      document.getElementById("userId").innerText = user.id;
-      document.getElementById("userPic").src = user.photo_url || "";
-      refLink.value = `${window.location.origin}/index.html?ref=${user.id}`;
-    } else {
-      refLink.value = `${window.location.href.split('?')[0]}?ref=123456789`;
+    tg.ready();
+
+    const countdown = document.getElementById('countdown');
+    const avatar = document.getElementById('avatar');
+    const usernameEl = document.getElementById('username');
+    const useridEl = document.getElementById('userid');
+    const profile = document.getElementById('profile');
+    const refInput = document.getElementById('refLink');
+
+    const deadline = new Date("2025-06-01T00:00:00").getTime();
+    const tick = () => {
+      const now = new Date().getTime();
+      const diff = deadline - now;
+      if (diff <= 0) return countdown.innerText = "00:00:00";
+      const h = String(Math.floor((diff / (1000 * 60 * 60)) % 24)).padStart(2, '0');
+      const m = String(Math.floor((diff / (1000 * 60)) % 60)).padStart(2, '0');
+      const s = String(Math.floor((diff / 1000) % 60)).padStart(2, '0');
+      countdown.innerText = `${h}:${m}:${s}`;
+    };
+    setInterval(tick, 1000);
+    tick();
+
+    const supabase = createClient("https://fiuybsclifxxhnpkdcfj.supabase.co", "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZpdXlic2NsaWZ4eGhucGtkY2ZqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDgxNDY0NDksImV4cCI6MjA2MzcyMjQ0OX0.FMM504dMKv8DclfPeGtZS7pLja0YY6d7ODgyeRdDZgg");
+
+    const urlParams = new URLSearchParams(window.location.search);
+    const refId = urlParams.get("ref");
+
+    async function saveUser(user) {
+      const { data, error } = await supabase
+        .from("users")
+        .upsert({
+          telegram_id: user.id,
+          username: user.username,
+          photo_url: user.photo_url,
+          referred_by: refId ? Number(refId) : null
+        }, { onConflict: ['telegram_id'] });
+
+      if (error) console.error("Ошибка сохранения:", error);
     }
+
+    Telegram.WebApp.getUser().then((user) => {
+      avatar.src = user.photo_url;
+      usernameEl.innerText = "@" + user.username;
+      useridEl.innerText = user.id;
+      profile.style.display = "block";
+      refInput.value = `${window.location.origin}?ref=${user.id}`;
+      saveUser(user);
+    });
   </script>
 </body>
 </html>
