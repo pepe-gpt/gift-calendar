@@ -5,43 +5,14 @@
   <title>Календарь подарков</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <script src="https://telegram.org/js/telegram-web-app.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.39.5/+esm"></script>
+  <script type="module" src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm"></script>
   <style>
-    body {
-      font-family: sans-serif;
-      text-align: center;
-      padding: 40px;
-      background: #f7f8fa;
-    }
-    h1 {
-      font-size: 22px;
-      margin-bottom: 10px;
-    }
-    #countdown {
-      font-size: 36px;
-      margin-bottom: 30px;
-    }
-    .profile img {
-      width: 64px;
-      height: 64px;
-      border-radius: 50%;
-      margin-bottom: 10px;
-    }
-    input {
-      padding: 8px;
-      width: 90%;
-      margin-bottom: 20px;
-      border-radius: 8px;
-      border: 1px solid #ccc;
-    }
-    a.button {
-      display: inline-block;
-      padding: 10px 20px;
-      background: #0088cc;
-      color: white;
-      border-radius: 8px;
-      text-decoration: none;
-    }
+    body { font-family: sans-serif; text-align: center; padding: 40px; background: #f7f8fa; }
+    h1 { font-size: 22px; margin-bottom: 10px; }
+    #countdown { font-size: 36px; margin-bottom: 30px; }
+    .profile img { width: 64px; height: 64px; border-radius: 50%; margin-bottom: 10px; }
+    input { padding: 8px; width: 90%; margin-bottom: 20px; border-radius: 8px; border: 1px solid #ccc; }
+    a.button { display: inline-block; padding: 10px 20px; background: #0088cc; color: white; border-radius: 8px; text-decoration: none; }
   </style>
 </head>
 <body>
@@ -63,14 +34,22 @@
     const tg = window.Telegram.WebApp;
     tg.ready();
 
-    const countdown = document.getElementById('countdown');
+    // Supabase подключение
+    import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm';
+    const supabase = createClient(
+      'https://fiuybsclifxxhnpkdcfj.supabase.co',
+      'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZpdXlic2NsaWZ4eGhucGtkY2ZqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDgxNDY0NDksImV4cCI6MjA2MzcyMjQ0OX0.FMM504dMKv8DclfPeGtZS7pLja0YY6d7ODgyeRdDZgg'
+    );
+
+    const profile = document.getElementById('profile');
     const avatar = document.getElementById('avatar');
     const usernameEl = document.getElementById('username');
     const useridEl = document.getElementById('userid');
-    const profile = document.getElementById('profile');
     const refInput = document.getElementById('refLink');
 
     const deadline = new Date("2025-06-01T00:00:00").getTime();
+    const countdown = document.getElementById('countdown');
+
     const tick = () => {
       const now = new Date().getTime();
       const diff = deadline - now;
@@ -83,33 +62,31 @@
     setInterval(tick, 1000);
     tick();
 
-    const supabase = createClient(
-      "https://fiuybsclifxxhnpkdcfj.supabase.co",
-      "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZpdXlic2NsaWZ4eGhucGtkY2ZqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDgxNDY0NDksImV4cCI6MjA2MzcyMjQ0OX0.FMM504dMKv8DclfPeGtZS7pLja0YY6d7ODgyeRdDZgg"
-    );
-
-    const urlParams = new URLSearchParams(window.location.search);
-    const refId = urlParams.get("ref");
-
+    // Получаем данные Telegram-пользователя из initDataUnsafe
     const user = tg.initDataUnsafe?.user;
     if (user) {
       avatar.src = user.photo_url;
-      usernameEl.innerText = `@${user.username}`;
+      usernameEl.innerText = "@" + user.username;
       useridEl.innerText = user.id;
       profile.style.display = "block";
       refInput.value = `${window.location.origin}?ref=${user.id}`;
 
-      supabase.from("users").upsert({
-        telegram_id: user.id,
-        username: user.username,
-        photo_url: user.photo_url,
-        referred_by: refId ? Number(refId) : null
-      }, { onConflict: ['telegram_id'] })
-      .then(({ error }) => {
-        if (error) console.error("Ошибка сохранения:", error);
-      });
+      // Сохраняем в Supabase
+      const urlParams = new URLSearchParams(window.location.search);
+      const refId = urlParams.get("ref");
+
+      const { error } = await supabase
+        .from("users")
+        .upsert({
+          telegram_id: user.id,
+          username: user.username,
+          photo_url: user.photo_url,
+          referred_by: refId ? Number(refId) : null
+        }, { onConflict: ['telegram_id'] });
+
+      if (error) console.error("Ошибка при сохранении в Supabase:", error);
     } else {
-      refInput.value = "Пожалуйста, откройте Mini App через Telegram";
+      alert("Ошибка: не удалось получить данные Telegram.");
     }
   </script>
 </body>
