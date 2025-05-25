@@ -31,11 +31,11 @@
   <br><a href="leaderboard.html" class="button">Таблица лидеров</a>
 
   <script type="module">
+    import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm';
+
     const tg = window.Telegram.WebApp;
     tg.ready();
 
-    // Supabase подключение
-    import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm';
     const supabase = createClient(
       'https://fiuybsclifxxhnpkdcfj.supabase.co',
       'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZpdXlic2NsaWZ4eGhucGtkY2ZqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDgxNDY0NDksImV4cCI6MjA2MzcyMjQ0OX0.FMM504dMKv8DclfPeGtZS7pLja0YY6d7ODgyeRdDZgg'
@@ -62,32 +62,33 @@
     setInterval(tick, 1000);
     tick();
 
-    // Получаем данные Telegram-пользователя из initDataUnsafe
-    const user = tg.initDataUnsafe?.user;
-    if (user) {
-      avatar.src = user.photo_url;
-      usernameEl.innerText = "@" + user.username;
-      useridEl.innerText = user.id;
-      profile.style.display = "block";
-      refInput.value = `${window.location.origin}?ref=${user.id}`;
+    (async () => {
+      const user = tg.initDataUnsafe?.user;
 
-      // Сохраняем в Supabase
-      const urlParams = new URLSearchParams(window.location.search);
-      const refId = urlParams.get("ref");
+      if (user) {
+        avatar.src = user.photo_url;
+        usernameEl.innerText = "@" + user.username;
+        useridEl.innerText = user.id;
+        profile.style.display = "block";
+        refInput.value = `${window.location.origin}?ref=${user.id}`;
 
-      const { error } = await supabase
-        .from("users")
-        .upsert({
-          telegram_id: user.id,
-          username: user.username,
-          photo_url: user.photo_url,
-          referred_by: refId ? Number(refId) : null
-        }, { onConflict: ['telegram_id'] });
+        const urlParams = new URLSearchParams(window.location.search);
+        const refId = urlParams.get("ref");
 
-      if (error) console.error("Ошибка при сохранении в Supabase:", error);
-    } else {
-      alert("Ошибка: не удалось получить данные Telegram.");
-    }
+        const { error } = await supabase
+          .from("users")
+          .upsert({
+            telegram_id: user.id,
+            username: user.username,
+            photo_url: user.photo_url,
+            referred_by: refId ? Number(refId) : null
+          }, { onConflict: ['telegram_id'] });
+
+        if (error) console.error("Ошибка при сохранении в Supabase:", error);
+      } else {
+        alert("Ошибка: не удалось получить данные Telegram.");
+      }
+    })();
   </script>
 </body>
 </html>
