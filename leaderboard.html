@@ -1,8 +1,9 @@
+<!-- leaderboard.html -->
 <!DOCTYPE html>
 <html lang="ru">
 <head>
   <meta charset="UTF-8" />
-  <title>Таблица лидеров</title>
+  <title>Топ лидеров</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <script type="module" src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm"></script>
   <style>
@@ -41,11 +42,6 @@
       padding: 12px 16px;
       margin-bottom: 14px;
       box-shadow: 0 2px 5px rgba(0,0,0,0.08);
-      transition: all 0.2s ease-in-out;
-    }
-
-    .user:hover {
-      transform: scale(1.01);
     }
 
     .user img {
@@ -53,46 +49,31 @@
       height: 56px;
       border-radius: 50%;
       margin-right: 12px;
-      object-fit: cover;
-      border: 2px solid #ddd;
+    }
+
+    .rank {
+      font-size: 20px;
+      font-weight: bold;
+      width: 36px;
+      text-align: center;
+      margin-right: 8px;
     }
 
     .user-info {
       display: flex;
       justify-content: space-between;
+      width: 100%;
       align-items: center;
-      flex-grow: 1;
-      flex-wrap: wrap;
     }
 
     .user-name {
+      font-weight: bold;
       font-size: 16px;
-      font-weight: 600;
-      margin-right: auto;
     }
 
-    .user-details {
-      display: flex;
-      align-items: center;
-      gap: 6px;
+    .user-referrals {
       font-size: 14px;
-    }
-
-    .rank {
-      font-size: 18px;
-      width: 32px;
-      text-align: center;
-      margin-right: 8px;
-    }
-
-    .gift {
-      font-size: 16px;
-      margin-left: 2px;
-    }
-
-    @media (max-width: 480px) {
-      .user-name { font-size: 14px; }
-      .user-details { font-size: 12px; }
+      white-space: nowrap;
     }
   </style>
 </head>
@@ -106,18 +87,16 @@
 
     const supabase = createClient(
       'https://fiuybsclifxxhnpkdcfj.supabase.co',
-      'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZpdXlic2NsaWZ4eGhucGtkY2ZqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDgxNDY0NDksImV4cCI6MjA2MzcyMjQ0OX0.FMM504dMKv8DclfPeGtZS7pLja0YY6d7ODgyeRdDZgg'
+      'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...'
     );
 
     const list = document.getElementById('list');
     list.innerHTML = 'Загрузка...';
 
     try {
-      const { data: allUsers, error } = await supabase
+      const { data: allUsers } = await supabase
         .from("users")
         .select("telegram_id, username, first_name, last_name, photo_url, referred_by");
-
-      if (error) throw error;
 
       const leaderboard = allUsers
         .map(user => ({
@@ -132,25 +111,21 @@
       list.innerHTML = '';
 
       leaderboard.forEach((user, index) => {
-        const rank = index + 1;
-        const trophy = rank === 1 ? '🥇' : rank === 2 ? '🥈' : rank === 3 ? '🥉' : rank;
+        const place = index + 1;
+        const trophy = place === 1 ? '🥇' : place === 2 ? '🥈' : place === 3 ? '🥉' : place;
 
-        const userEl = document.createElement("div");
-        userEl.className = "user";
-        userEl.innerHTML = `
+        const el = document.createElement('div');
+        el.className = 'user';
+        el.innerHTML = `
           <div class="rank">${trophy}</div>
-          <img src="${user.photo_url || 'https://via.placeholder.com/56'}" alt="">
+          <img src="${user.photo_url || 'https://via.placeholder.com/56'}" />
           <div class="user-info">
             <div class="user-name">${user.name}</div>
-            <div class="user-details">
-              👥 ${user.referrals}
-              ${index < 25 ? '<span class="gift">🎁</span>' : ''}
-            </div>
+            <div class="user-referrals">👥 ${user.referrals} ${index < 25 ? '🎁' : ''}</div>
           </div>
         `;
-        list.appendChild(userEl);
+        list.appendChild(el);
       });
-
     } catch (err) {
       console.error(err);
       list.innerHTML = 'Ошибка загрузки: ' + err.message;

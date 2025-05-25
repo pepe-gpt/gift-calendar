@@ -8,58 +8,92 @@
   <script type="module" src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm"></script>
   <style>
     body {
-      font-family: sans-serif;
-      text-align: center;
-      padding: 40px;
+      font-family: 'Segoe UI', sans-serif;
       background: #f7f8fa;
+      text-align: center;
+      padding: 40px 20px;
+      margin: 0;
+      color: #222;
     }
+
     h1 {
       font-size: 22px;
       margin-bottom: 10px;
     }
+
     #countdown {
-      font-size: 36px;
+      font-family: monospace;
+      font-size: 40px;
+      font-weight: bold;
+      color: #0088cc;
       margin-bottom: 30px;
     }
+
+    .profile {
+      margin-bottom: 30px;
+    }
+
     .profile img {
-      width: 64px;
-      height: 64px;
+      width: 80px;
+      height: 80px;
       border-radius: 50%;
       margin-bottom: 10px;
     }
+
+    .profile-name {
+      font-size: 18px;
+      font-weight: bold;
+    }
+
     .button-row {
       display: flex;
       justify-content: center;
       gap: 10px;
       margin-bottom: 20px;
+      flex-wrap: wrap;
     }
-    .invite-button, .share-button {
+
+    .button, .invite-button, .share-button {
       display: inline-flex;
       align-items: center;
-      background: #0088cc;
-      color: white;
-      padding: 10px 16px;
-      border: none;
-      border-radius: 8px;
+      justify-content: center;
+      min-width: 130px;
+      padding: 14px 20px;
       font-size: 16px;
+      border-radius: 10px;
+      border: none;
       cursor: pointer;
-      transition: background 0.3s;
+      text-decoration: none;
+      transition: background 0.2s;
     }
-    .invite-button svg, .share-button svg {
-      width: 20px;
-      height: 20px;
-      margin-left: 8px;
+
+    .invite-button {
+      background: #0088cc;
+      color: #fff;
+      flex-grow: 1;
     }
-    .copied {
-      background: #44c767 !important;
+
+    .invite-button.copied {
+      background: #44c767;
     }
-    a.button {
-      display: inline-block;
-      padding: 10px 20px;
+
+    .share-button {
+      width: 56px;
       background: #0088cc;
       color: white;
-      border-radius: 8px;
-      text-decoration: none;
+      padding: 0;
+    }
+
+    .share-button svg {
+      width: 24px;
+      height: 24px;
+    }
+
+    .leaderboard-link {
+      background: #4a90e2;
+      color: white;
+      font-weight: bold;
+      width: 100%;
     }
   </style>
 </head>
@@ -69,28 +103,20 @@
 
   <div class="profile" id="profile" style="display:none;">
     <img id="avatar" src="" />
-    <div id="name"></div>
+    <div class="profile-name" id="name"></div>
   </div>
 
   <div class="button-row">
-    <button class="invite-button" id="copyBtn">
-      Пригласить
-      <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-              d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-4 4h4a2 2 0 012 2v6a2 2 0 01-2 2h-8a2 2 0 01-2-2v-6a2 2 0 012-2z" />
-      </svg>
-    </button>
-
+    <button class="invite-button" id="copyBtn">Пригласить</button>
     <button class="share-button" id="shareBtn">
-      Поделиться
       <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-              d="M15 8a3 3 0 11-6 0 3 3 0 016 0zm6 6a3 3 0 11-6 0 3 3 0 016 0zm-6 6a3 3 0 11-6 0 3 3 0 016 0z" />
+          d="M15 8a3 3 0 11-6 0 3 3 0 016 0zm6 6a3 3 0 11-6 0 3 3 0 016 0zm-6 6a3 3 0 11-6 0 3 3 0 016 0z" />
       </svg>
     </button>
   </div>
 
-  <a href="leaderboard.html" class="button">Таблица лидеров</a>
+  <a href="leaderboard.html" class="button leaderboard-link">Таблица лидеров</a>
 
   <script type="module">
     import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm';
@@ -100,23 +126,24 @@
 
     const supabase = createClient(
       'https://fiuybsclifxxhnpkdcfj.supabase.co',
-      'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZpdXlic2NsaWZ4eGhucGtkY2ZqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDgxNDY0NDksImV4cCI6MjA2MzcyMjQ0OX0.FMM504dMKv8DclfPeGtZS7pLja0YY6d7ODgyeRdDZgg'
+      'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...'
     );
 
-    const profile = document.getElementById('profile');
     const avatar = document.getElementById('avatar');
     const nameEl = document.getElementById('name');
+    const profile = document.getElementById('profile');
     const copyBtn = document.getElementById('copyBtn');
     const shareBtn = document.getElementById('shareBtn');
     const countdown = document.getElementById('countdown');
+
     const deadline = new Date("2025-06-01T00:00:00").getTime();
 
     const tick = () => {
       const now = new Date().getTime();
       const diff = deadline - now;
       if (diff <= 0) return countdown.innerText = "00:00:00";
-      const h = String(Math.floor((diff / (1000 * 60 * 60)) % 24)).padStart(2, '0');
-      const m = String(Math.floor((diff / (1000 * 60)) % 60)).padStart(2, '0');
+      const h = String(Math.floor((diff / 3600000) % 24)).padStart(2, '0');
+      const m = String(Math.floor((diff / 60000) % 60)).padStart(2, '0');
       const s = String(Math.floor((diff / 1000) % 60)).padStart(2, '0');
       countdown.innerText = `${h}:${m}:${s}`;
     };
@@ -126,32 +153,26 @@
     const user = tg.initDataUnsafe?.user;
 
     if (user) {
-      const fullName = [user.first_name, user.last_name].filter(Boolean).join(' ');
+      const fullName = [user.first_name, user.last_name].filter(Boolean).join(' ') || user.username;
       avatar.src = user.photo_url;
       nameEl.innerText = fullName;
-      profile.style.display = "block";
+      profile.style.display = 'block';
 
       const refLink = `https://t.me/GiftsCalendar_bot?startapp=ref${user.id}`;
 
       copyBtn.onclick = () => {
         navigator.clipboard.writeText(refLink).then(() => {
-          copyBtn.classList.add("copied");
-          copyBtn.innerHTML = 'Скопировано ✓';
+          copyBtn.classList.add('copied');
+          copyBtn.innerText = 'Скопировано ✓';
           setTimeout(() => {
-            copyBtn.classList.remove("copied");
-            copyBtn.innerHTML = `Пригласить
-              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                      d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-4 4h4a2 2 0 012 2v6a2 2 0 01-2 2h-8a2 2 0 01-2-2v-6a2 2 0 012-2z" />
-              </svg>`;
+            copyBtn.classList.remove('copied');
+            copyBtn.innerText = 'Пригласить';
           }, 2000);
         });
       };
 
-      // Вариант пересылки сообщения, отправленного ботом заранее
-      const MESSAGE_ID = 1;
       shareBtn.onclick = () => {
-        tg.openTelegramLink(`https://t.me/share/inline?bot=GiftsCalendar_bot&message_id=${MESSAGE_ID}`);
+        tg.openTelegramLink(`https://t.me/share/url?url=${encodeURIComponent(refLink)}&text=${encodeURIComponent("🎁 Попробуй выиграть стикеры, подарки и TON в Календаре Подарков!")}`);
       };
 
       const urlParams = new URLSearchParams(window.location.search);
@@ -164,24 +185,18 @@
         .single();
 
       if (!existingUser && user.id !== refId) {
-        const { error } = await supabase.from("users").insert({
+        await supabase.from("users").insert({
           telegram_id: user.id,
           username: user.username,
+          first_name: user.first_name,
+          last_name: user.last_name,
           photo_url: user.photo_url,
           referred_by: refId || null
         });
-        if (error) console.error("Ошибка при сохранении:", error);
       }
     } else {
-      alert("❗ Открой мини-приложение через Telegram. Данные не получены.");
+      alert("❗ Открой мини-приложение через Telegram.");
     }
   </script>
 </body>
 </html>
-
-    }
-  </script>
-</body>
-</html>
-
-
