@@ -73,19 +73,8 @@
   </div>
 
   <div class="button-row">
-    <button class="invite-button" id="copyBtn">
-      Пригласить
-      <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-4 4h4a2 2 0 012 2v6a2 2 0 01-2 2h-8a2 2 0 01-2-2v-6a2 2 0 012-2z" />
-      </svg>
-    </button>
-
-    <button class="share-button" id="shareBtn">
-      Поделиться
-      <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 8a3 3 0 11-6 0 3 3 0 016 0zm6 6a3 3 0 11-6 0 3 3 0 016 0zm-6 6a3 3 0 11-6 0 3 3 0 016 0z" />
-      </svg>
-    </button>
+    <button class="invite-button" id="copyBtn">Пригласить ✅</button>
+    <button class="share-button" id="shareBtn">Поделиться 📤</button>
   </div>
 
   <a href="leaderboard.html" class="button">Таблица лидеров</a>
@@ -98,10 +87,9 @@
 
     const supabase = createClient(
       'https://fiuybsclifxxhnpkdcfj.supabase.co',
-      'YOUR_ANON_KEY_HERE'
+      'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...'
     );
 
-    const profile = document.getElementById('profile');
     const avatar = document.getElementById('avatar');
     const nameEl = document.getElementById('name');
     const copyBtn = document.getElementById('copyBtn');
@@ -126,49 +114,41 @@
       const fullName = [user.first_name, user.last_name].filter(Boolean).join(' ');
       avatar.src = user.photo_url;
       nameEl.innerText = fullName;
-      profile.style.display = "block";
+      document.getElementById('profile').style.display = 'block';
 
-      const refLink = `https://t.me/GiftsCalendar_bot/miniapp?startapp=ref${user.id}`;
+      const refLink = `https://t.me/GiftsCalendar_bot?startapp=ref${user.id}`;
+      const sharedMsgLink = `https://t.me/adventon/12`; // 👈 сюда вставь ID готового сообщения из канала
 
       copyBtn.onclick = () => {
         navigator.clipboard.writeText(refLink).then(() => {
           copyBtn.classList.add("copied");
-          copyBtn.innerHTML = 'Скопировано ✓';
+          copyBtn.innerText = 'Скопировано ✓';
           setTimeout(() => {
             copyBtn.classList.remove("copied");
-            copyBtn.innerHTML = `Пригласить
-              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-4 4h4a2 2 0 012 2v6a2 2 0 01-2 2h-8a2 2 0 01-2-2v-6a2 2 0 012-2z" />
-              </svg>`;
+            copyBtn.innerText = 'Пригласить ✅';
           }, 2000);
         });
       };
 
       shareBtn.onclick = () => {
-        tg.openTelegramLink("https://t.me/share/inline?bot=GiftsCalendar_bot&message_id=6");
+        tg.openTelegramLink(sharedMsgLink);
       };
 
       const urlParams = new URLSearchParams(window.location.search);
       const refId = Number(urlParams.get("ref"));
 
-      const { data: existingUser } = await supabase
-        .from("users")
-        .select("id")
-        .eq("telegram_id", user.id)
-        .single();
-
-      if (!existingUser && user.id !== refId) {
-        const { error } = await supabase.from("users").insert({
+      const { data: exists } = await supabase.from("users").select("id").eq("telegram_id", user.id).single();
+      if (!exists && user.id !== refId) {
+        await supabase.from("users").insert({
           telegram_id: user.id,
           username: user.username,
           photo_url: user.photo_url,
           referred_by: refId || null
         });
-        if (error) console.error("Ошибка при сохранении:", error);
       }
-    } else {
-      alert("\u2757 Открой мини-приложение через Telegram. Данные не получены.");
     }
   </script>
 </body>
 </html>
+
+
