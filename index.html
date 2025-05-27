@@ -100,10 +100,18 @@
     );
 
     const user = tg.initDataUnsafe?.user;
-    const urlParams = new URLSearchParams(window.location.search);
-    const refIdRaw = urlParams.get("startapp") || urlParams.get("ref") || "";
-    const refId = refIdRaw.replace("ref=", "").replace("ref", "");
 
+    if (!user) {
+      alert("❗ Запусти приложение через Telegram.");
+      throw new Error("Telegram user not found.");
+    }
+
+    // Отображение профиля
+    document.getElementById('avatar').src = user.photo_url || '';
+    document.getElementById('name').innerText = `${user.first_name || ''} ${user.last_name || ''}`;
+    document.getElementById('profile').style.display = 'block';
+
+    // Отсчёт до запуска
     const countdown = document.getElementById('countdown');
     const deadline = new Date("2025-06-01T00:00:00").getTime();
     const tick = () => {
@@ -115,22 +123,23 @@
       const s = String(Math.floor((diff / 1000) % 60)).padStart(2, '0');
       countdown.innerText = `${h}:${m}:${s}`;
     };
-    setInterval(tick, 1000); tick();
+    setInterval(tick, 1000);
+    tick();
 
-    if (!user) {
-      alert("❗ Запусти приложение через Telegram.");
-      throw new Error("Telegram user not found.");
-    }
+    // Работа с реферальной ссылкой
+    const urlParams = new URLSearchParams(window.location.search);
+    const refParam = urlParams.get("startapp") || urlParams.get("ref") || "";
+    const refId = refParam.replace("ref=", "").replace("ref", "");
+    const myId = user.id;
+    const referred_by = (refId && String(refId) !== String(myId)) ? Number(refId) : null;
 
-    // Показываем профиль
-    document.getElementById('avatar').src = user.photo_url || '';
-    document.getElementById('name').innerText = `${user.first_name || ''} ${user.last_name || ''}`;
-    document.getElementById('profile').style.display = 'block';
+    console.log("🧪 Telegram ID:", myId);
+    console.log("🔗 Ref from URL:", refId);
+    console.log("✅ Будет записано как referred_by:", referred_by);
 
-    // Генерируем ссылку
-    const refLink = `https://t.me/GiftsCalendar_bot/miniapp?startapp=ref=${user.id}`;
+    // Генерация ссылки
+    const refLink = `https://t.me/GiftsCalendar_bot/miniapp?startapp=ref=${myId}`;
 
-    // Копирование
     document.getElementById('copyBtn').onclick = () => {
       navigator.clipboard.writeText(refLink).then(() => {
         const btn = document.getElementById('copyBtn');
@@ -143,37 +152,34 @@
       });
     };
 
-    // Поделиться
     document.getElementById('shareBtn').onclick = () => {
       tg.openTelegramLink(`https://t.me/share/url?url=${encodeURIComponent(refLink)}&text=${encodeURIComponent("🎁 Участвуй в Календаре Подарков и получай стикеры, NFT и TON!")}`);
     };
 
-    // Пытаемся вставить нового пользователя (или пропустить, если уже есть)
-    try {
-      const { data: exists, error: checkErr } = await supabase
-        .from("users")
-        .select("id")
-        .eq("telegram_id", user.id)
-        .maybeSingle();
+    // Запись пользователя
+    const { data: existingUser, error: selectError } = await supabase
+      .from("users")
+      .select("id")
+      .eq("telegram_id", myId)
+      .maybeSingle();
 
-      if (!exists) {
-        const refUserId = (refId && String(refId) !== String(user.id)) ? Number(refId) : null;
-        const { error: insertError } = await supabase.from("users").insert({
-          telegram_id: user.id,
-          username: user.username,
-          first_name: user.first_name,
-          last_name: user.last_name,
-          photo_url: user.photo_url,
-          referred_by: refUserId
-        });
+    if (!existingUser) {
+      const { error: insertError } = await supabase.from("users").insert({
+        telegram_id: myId,
+        username: user.username,
+        first_name: user.first_name,
+        last_name: user.last_name,
+        photo_url: user.photo_url,
+        referred_by: referred_by
+      });
 
-        if (insertError) console.error("❌ Ошибка записи в Supabase:", insertError.message);
-        else console.log("✅ Пользователь успешно добавлен.");
+      if (insertError) {
+        console.error("❌ Ошибка вставки в Supabase:", insertError.message);
       } else {
-        console.log("ℹ️ Пользователь уже в базе данных.");
+        console.log("✅ Новый пользователь успешно записан.");
       }
-    } catch (e) {
-      console.error("💥 Ошибка при работе с Supabase:", e);
+    } else {
+      console.log("ℹ️ Пользователь уже есть в базе.");
     }
   </script>
 </body>
