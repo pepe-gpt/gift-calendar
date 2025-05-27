@@ -127,15 +127,16 @@
     tick();
 
     // Работа с реферальной ссылкой
-    const urlParams = new URLSearchParams(window.location.search);
-    const refParam = urlParams.get("startapp") || urlParams.get("ref") || "";
+    // Получаем реферальный параметр напрямую от Telegram
+    const refParam = tg.initDataUnsafe?.start_param || "";
     const refId = refParam.replace("ref=", "").replace("ref", "");
     const myId = user.id;
     const referred_by = (refId && String(refId) !== String(myId)) ? Number(refId) : null;
 
     console.log("🧪 Telegram ID:", myId);
-    console.log("🔗 Ref from URL:", refId);
+    console.log("🔗 Ref from Telegram API:", refId);
     console.log("✅ Будет записано как referred_by:", referred_by);
+
 
     // Генерация ссылки
     const refLink = `https://t.me/GiftsCalendar_bot/miniapp?startapp=ref=${myId}`;
