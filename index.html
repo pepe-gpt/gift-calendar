@@ -99,14 +99,13 @@
       'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZpdXlic2NsaWZ4eGhucGtkY2ZqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDgxNDY0NDksImV4cCI6MjA2MzcyMjQ0OX0.FMM504dMKv8DclfPeGtZS7pLja0YY6d7ODgyeRdDZgg'
     );
 
-    const profile = document.getElementById('profile');
-    const avatar = document.getElementById('avatar');
-    const nameEl = document.getElementById('name');
-    const copyBtn = document.getElementById('copyBtn');
-    const shareBtn = document.getElementById('shareBtn');
+    const user = tg.initDataUnsafe?.user;
+    const urlParams = new URLSearchParams(window.location.search);
+    const refIdRaw = urlParams.get("startapp") || urlParams.get("ref") || "";
+    const refId = refIdRaw.replace("ref=", "").replace("ref", "");
+
     const countdown = document.getElementById('countdown');
     const deadline = new Date("2025-06-01T00:00:00").getTime();
-
     const tick = () => {
       const now = new Date().getTime();
       const diff = deadline - now;
@@ -116,63 +115,65 @@
       const s = String(Math.floor((diff / 1000) % 60)).padStart(2, '0');
       countdown.innerText = `${h}:${m}:${s}`;
     };
-    setInterval(tick, 1000);
-    tick();
+    setInterval(tick, 1000); tick();
 
-    const user = tg.initDataUnsafe?.user;
-    const urlParams = new URLSearchParams(window.location.search);
-    const refIdRaw = urlParams.get("startapp") || urlParams.get("ref") || "";
-    const refId = refIdRaw.replace("ref=", "").replace("ref", "");
+    if (!user) {
+      alert("❗ Запусти приложение через Telegram.");
+      throw new Error("Telegram user not found.");
+    }
 
-    if (user) {
-      const fullName = [user.first_name, user.last_name].filter(Boolean).join(' ');
-      avatar.src = user.photo_url || '';
-      nameEl.innerText = fullName;
-      profile.style.display = "block";
+    // Показываем профиль
+    document.getElementById('avatar').src = user.photo_url || '';
+    document.getElementById('name').innerText = `${user.first_name || ''} ${user.last_name || ''}`;
+    document.getElementById('profile').style.display = 'block';
 
-      const refLink = `https://t.me/GiftsCalendar_bot/miniapp?startapp=ref=${user.id}`;
+    // Генерируем ссылку
+    const refLink = `https://t.me/GiftsCalendar_bot/miniapp?startapp=ref=${user.id}`;
 
-      copyBtn.onclick = () => {
-        navigator.clipboard.writeText(refLink).then(() => {
-          copyBtn.classList.add("copied");
-          copyBtn.innerText = "Скопировано ✓";
-          setTimeout(() => {
-            copyBtn.classList.remove("copied");
-            copyBtn.innerText = "Пригласить 📋";
-          }, 1500);
-        });
-      };
+    // Копирование
+    document.getElementById('copyBtn').onclick = () => {
+      navigator.clipboard.writeText(refLink).then(() => {
+        const btn = document.getElementById('copyBtn');
+        btn.classList.add("copied");
+        btn.innerText = "Скопировано ✓";
+        setTimeout(() => {
+          btn.classList.remove("copied");
+          btn.innerText = "Пригласить 📋";
+        }, 1500);
+      });
+    };
 
-      shareBtn.onclick = () => {
-        tg.openTelegramLink(`https://t.me/share/url?url=${encodeURIComponent(refLink)}&text=${encodeURIComponent("🎁 Участвуй в Календаре Подарков и получай стикеры, NFT и TON!")}`);
-      };
+    // Поделиться
+    document.getElementById('shareBtn').onclick = () => {
+      tg.openTelegramLink(`https://t.me/share/url?url=${encodeURIComponent(refLink)}&text=${encodeURIComponent("🎁 Участвуй в Календаре Подарков и получай стикеры, NFT и TON!")}`);
+    };
 
-      // 🧪 Проверка вставки в базу
-      console.log("🧪 Попытка вставки нового пользователя в Supabase...");
+    // Пытаемся вставить нового пользователя (или пропустить, если уже есть)
+    try {
+      const { data: exists, error: checkErr } = await supabase
+        .from("users")
+        .select("id")
+        .eq("telegram_id", user.id)
+        .maybeSingle();
 
-      const referred_by = (refId && String(user.id) !== String(refId)) ? Number(refId) : null;
-      console.log("👤 Telegram ID:", user.id);
-      console.log("🔗 Ref ID:", referred_by);
-
-      const { data: insertData, error: insertError } = await supabase
-        .from('users')
-        .insert({
+      if (!exists) {
+        const refUserId = (refId && String(refId) !== String(user.id)) ? Number(refId) : null;
+        const { error: insertError } = await supabase.from("users").insert({
           telegram_id: user.id,
           username: user.username,
           first_name: user.first_name,
           last_name: user.last_name,
           photo_url: user.photo_url,
-          referred_by: referred_by
+          referred_by: refUserId
         });
 
-      if (insertError) {
-        console.error("❌ Ошибка вставки:", insertError.message, insertError.details);
+        if (insertError) console.error("❌ Ошибка записи в Supabase:", insertError.message);
+        else console.log("✅ Пользователь успешно добавлен.");
       } else {
-        console.log("✅ Пользователь успешно добавлен:", insertData);
+        console.log("ℹ️ Пользователь уже в базе данных.");
       }
-
-    } else {
-      alert("❗ Запусти приложение через Telegram.");
+    } catch (e) {
+      console.error("💥 Ошибка при работе с Supabase:", e);
     }
   </script>
 </body>
