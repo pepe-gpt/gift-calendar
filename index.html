@@ -13,14 +13,20 @@
       padding: 20px;
       text-align: center;
     }
-    h1 {
-      font-size: 22px;
-      margin-bottom: 15px;
-    }
-    #countdown {
-      font-size: 34px;
+    .calendar-icon {
+      width: 120px;
+      height: 120px;
+      margin: 30px auto;
+      background: #fff;
+      border-radius: 20px;
+      font-size: 36px;
       font-weight: bold;
-      margin-bottom: 30px;
+      color: #0088cc;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      cursor: pointer;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.1);
     }
     .profile img {
       width: 80px;
@@ -73,8 +79,7 @@
   </style>
 </head>
 <body>
-  <h1>До запуска осталось:</h1>
-  <div id="countdown">Загрузка...</div>
+  <div class="calendar-icon" id="calendarIcon">Загрузка...</div>
 
   <div class="profile" id="profile" style="display:none;">
     <img id="avatar" src="" alt="Аватар" />
@@ -106,39 +111,23 @@
       throw new Error("Telegram user not found.");
     }
 
-    // Отображение профиля
     document.getElementById('avatar').src = user.photo_url || '';
     document.getElementById('name').innerText = `${user.first_name || ''} ${user.last_name || ''}`;
     document.getElementById('profile').style.display = 'block';
 
-    // Отсчёт до запуска
-    const countdown = document.getElementById('countdown');
-    const deadline = new Date("2025-06-01T00:00:00").getTime();
-    const tick = () => {
-      const now = new Date().getTime();
-      const diff = deadline - now;
-      if (diff <= 0) return countdown.innerText = "00:00:00";
-      const h = String(Math.floor((diff / (1000 * 60 * 60)) % 24)).padStart(2, '0');
-      const m = String(Math.floor((diff / (1000 * 60)) % 60)).padStart(2, '0');
-      const s = String(Math.floor((diff / 1000) % 60)).padStart(2, '0');
-      countdown.innerText = `${h}:${m}:${s}`;
-    };
-    setInterval(tick, 1000);
-    tick();
+    const calendarIcon = document.getElementById("calendarIcon");
+    const deadline = new Date("2025-06-01T00:00:00Z").getTime();
+    const now = new Date().getTime();
+    const diff = deadline - now;
+    const daysLeft = Math.ceil(diff / (1000 * 60 * 60 * 24));
+    calendarIcon.innerText = daysLeft > 1 ? daysLeft : '24:00';
+    calendarIcon.onclick = () => window.location.href = "calendar.html";
 
-    // Работа с реферальной ссылкой
-    // Получаем реферальный параметр напрямую от Telegram
     const refParam = tg.initDataUnsafe?.start_param || "";
     const refId = refParam.replace("ref=", "").replace("ref", "");
     const myId = user.id;
     const referred_by = (refId && String(refId) !== String(myId)) ? Number(refId) : null;
 
-    console.log("🧪 Telegram ID:", myId);
-    console.log("🔗 Ref from Telegram API:", refId);
-    console.log("✅ Будет записано как referred_by:", referred_by);
-
-
-    // Генерация ссылки
     const refLink = `https://t.me/GiftsCalendar_bot/miniapp?startapp=ref=${myId}`;
 
     document.getElementById('copyBtn').onclick = () => {
@@ -157,7 +146,6 @@
       tg.openTelegramLink(`https://t.me/share/url?url=${encodeURIComponent(refLink)}&text=${encodeURIComponent("🎁 Участвуй в Календаре Подарков и получай стикеры, NFT и TON!")}`);
     };
 
-    // Запись пользователя
     const { data: existingUser, error: selectError } = await supabase
       .from("users")
       .select("id")
