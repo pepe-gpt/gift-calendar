@@ -68,7 +68,8 @@
       checkBtn.innerText = "Проверка...";
 
       try {
-        const res = await fetch(`https://server-red-rho.vercel.app/api/check-membership?telegram_id=${user.id}`);
+        const res = await fetch(`https://server-lxmn9zuoh-dmitrys-projects-f8c4bcde.vercel.app/api/check-membership?telegram_id=${user.id}`);
+
         const data = await res.json();
 
         if (data.channel && data.chat) {
