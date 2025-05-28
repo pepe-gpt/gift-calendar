@@ -3,52 +3,100 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Открытие</title>
+  <title>Открыть ячейку</title>
+  <script src="https://telegram.org/js/telegram-web-app.js"></script>
   <style>
     body {
       font-family: sans-serif;
-      background: #121212;
-      color: #fff;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      height: 100vh;
-      text-align: center;
+      background: #f4f6fa;
       padding: 20px;
+      text-align: center;
     }
-    .box {
-      font-size: 24px;
-      margin-bottom: 30px;
-      animation: blink 1s infinite alternate;
+    h1 {
+      font-size: 22px;
+      margin-bottom: 15px;
     }
-    .points {
-      font-size: 40px;
-      font-weight: bold;
-      color: #00ffc8;
-      opacity: 0;
-      transition: opacity 0.3s ease-in-out;
+    .task {
+      background: white;
+      padding: 20px;
+      border-radius: 10px;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+      margin-bottom: 20px;
     }
-    @keyframes blink {
-      from { opacity: 1; }
-      to { opacity: 0.5; }
+    .btn {
+      display: block;
+      width: 100%;
+      padding: 14px;
+      font-size: 16px;
+      margin-top: 12px;
+      border: none;
+      border-radius: 10px;
+      background-color: #0088cc;
+      color: white;
+      cursor: pointer;
+    }
+    .btn.red {
+      background-color: #d9534f;
+    }
+    .btn.green {
+      background-color: #5cb85c;
+    }
+    #openBoxBtn {
+      display: none;
     }
   </style>
 </head>
 <body>
-  <div class="box">🎁 Открываем ячейку...</div>
-  <div class="points" id="reward">⌛</div>
+  <h1>🎁 Задание дня</h1>
+  <div class="task">
+    <p>Вступи в наш <b>канал</b> и <b>чат</b>, чтобы открыть ячейку!</p>
+    <button class="btn" onclick="window.open('https://t.me/calendargift', '_blank')">📢 Перейти в канал</button>
+    <button class="btn" onclick="window.open('https://t.me/adventon', '_blank')">💬 Перейти в чат</button>
+    <button class="btn" id="checkBtn">🔍 Проверить</button>
+    <button class="btn green" id="openBoxBtn">✅ Открыть ячейку</button>
+  </div>
 
   <script>
-    const possibleRewards = [10, 20, 30, 40, 50, 70, 100];
-    const reward = possibleRewards[Math.floor(Math.random() * possibleRewards.length)];
+    const tg = window.Telegram.WebApp;
+    tg.ready();
+    const user = tg.initDataUnsafe?.user;
+    const checkBtn = document.getElementById("checkBtn");
+    const openBoxBtn = document.getElementById("openBoxBtn");
 
-    setTimeout(() => {
-      const el = document.getElementById('reward');
-      el.innerText = `+${reward} поинтов!`;
-      el.style.opacity = 1;
-      // Здесь в будущем можно будет записывать поинты в Supabase
-    }, 2000);
+    async function checkMembership() {
+      checkBtn.disabled = true;
+      checkBtn.innerText = "Проверка...";
+
+      try {
+        const res = await fetch(`https://server-red-rho.vercel.app/api/check-membership?telegram_id=${user.id}`);
+        const data = await res.json();
+
+        if (data.channel && data.chat) {
+          checkBtn.style.display = "none";
+          openBoxBtn.style.display = "block";
+        } else {
+          failState();
+        }
+      } catch (err) {
+        failState();
+      }
+    }
+
+    function failState() {
+      checkBtn.classList.add("red");
+      checkBtn.innerText = "❌ Не выполнено";
+      setTimeout(() => {
+        checkBtn.classList.remove("red");
+        checkBtn.innerText = "🔍 Проверить";
+        checkBtn.disabled = false;
+      }, 2500);
+    }
+
+    checkBtn.onclick = checkMembership;
+    openBoxBtn.onclick = () => {
+      alert("🎉 Поздравляем! Вы получили от 10 до 100 поинтов!");
+      // Здесь будет анимация и логика начисления награды позже
+    }
   </script>
 </body>
 </html>
