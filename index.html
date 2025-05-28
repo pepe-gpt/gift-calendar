@@ -16,17 +16,17 @@
     .calendar-icon {
       width: 120px;
       height: 120px;
-      margin: 30px auto;
-      background: #fff;
       border-radius: 20px;
+      background: white;
+      display: flex;
+      align-items: center;
+      justify-content: center;
       font-size: 36px;
       font-weight: bold;
       color: #0088cc;
-      display: flex;
-      justify-content: center;
-      align-items: center;
+      margin: 30px auto;
       cursor: pointer;
-      box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+      box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
     }
     .profile img {
       width: 80px;
@@ -79,7 +79,7 @@
   </style>
 </head>
 <body>
-  <div class="calendar-icon" id="calendarIcon">Загрузка...</div>
+  <div class="calendar-icon" id="calendarIcon">31</div>
 
   <div class="profile" id="profile" style="display:none;">
     <img id="avatar" src="" alt="Аватар" />
@@ -115,13 +115,15 @@
     document.getElementById('name').innerText = `${user.first_name || ''} ${user.last_name || ''}`;
     document.getElementById('profile').style.display = 'block';
 
-    const calendarIcon = document.getElementById("calendarIcon");
-    const deadline = new Date("2025-06-01T00:00:00Z").getTime();
-    const now = new Date().getTime();
-    const diff = deadline - now;
-    const daysLeft = Math.ceil(diff / (1000 * 60 * 60 * 24));
-    calendarIcon.innerText = daysLeft > 1 ? daysLeft : '24:00';
-    calendarIcon.onclick = () => window.location.href = "calendar.html";
+    const startDate = new Date("2025-06-01T00:00:00Z");
+    const endDate = new Date(startDate.getTime() + 31 * 24 * 60 * 60 * 1000);
+    const today = new Date();
+    const diffMs = endDate - today;
+    const daysLeft = Math.max(0, Math.ceil(diffMs / (1000 * 60 * 60 * 24)));
+
+    const icon = document.getElementById("calendarIcon");
+    icon.innerText = daysLeft <= 1 ? "24:00" : daysLeft;
+    icon.onclick = () => window.location.href = "calendar.html";
 
     const refParam = tg.initDataUnsafe?.start_param || "";
     const refId = refParam.replace("ref=", "").replace("ref", "");

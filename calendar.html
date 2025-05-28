@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Календарь</title>
+  <style>
+    body {
+      font-family: sans-serif;
+      background: #f1f4f9;
+      margin: 0;
+      padding: 20px;
+      text-align: center;
+    }
+    h1 {
+      font-size: 22px;
+      margin-bottom: 20px;
+    }
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(5, 1fr);
+      gap: 12px;
+      max-width: 500px;
+      margin: 0 auto;
+    }
+    .cell {
+      background: white;
+      border-radius: 10px;
+      padding: 20px;
+      font-size: 20px;
+      font-weight: bold;
+      color: #0088cc;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+    }
+    .cell.locked {
+      background: #ddd;
+      color: #aaa;
+      cursor: not-allowed;
+    }
+    .cell.opened {
+      background: #cce5ff;
+      color: #0073aa;
+    }
+  </style>
+</head>
+<body>
+  <h1>Календарь подарков</h1>
+  <div class="grid" id="calendar"></div>
+
+  <script>
+    const calendarContainer = document.getElementById("calendar");
+    const totalDays = 31;
+
+    // Устанавливаем дату начала акции (например, 1 июня 2025)
+    const startDate = new Date("2025-06-01T00:00:00Z");
+    const today = new Date();
+
+    const daysSinceStart = Math.floor((today - startDate) / (1000 * 60 * 60 * 24));
+
+    for (let i = 0; i < totalDays; i++) {
+      const cell = document.createElement("div");
+      cell.classList.add("cell");
+      cell.innerText = i + 1;
+
+      if (i < daysSinceStart) {
+        cell.classList.add("opened");
+        cell.onclick = () => alert("Этот день уже открыт.");
+      } else if (i === daysSinceStart) {
+        cell.onclick = () => window.location.href = `open.html?day=${i + 1}`;
+      } else {
+        cell.classList.add("locked");
+      }
+
+      calendarContainer.appendChild(cell);
+    }
+  </script>
+</body>
+</html>
