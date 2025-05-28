@@ -43,9 +43,21 @@
       background: #cce5ff;
       color: #0073aa;
     }
+    .back-button {
+      display: inline-block;
+      margin-bottom: 20px;
+      padding: 10px 16px;
+      background: #0088cc;
+      color: white;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      font-size: 16px;
+    }
   </style>
 </head>
 <body>
+  <button class="back-button" onclick="history.back()">← Назад</button>
   <h1>Календарь подарков</h1>
   <div class="grid" id="calendar"></div>
 
@@ -53,11 +65,13 @@
     const calendarContainer = document.getElementById("calendar");
     const totalDays = 31;
 
-    // Устанавливаем дату начала акции (например, 1 июня 2025)
-    const startDate = new Date("2025-06-01T00:00:00Z");
+    // Установи дату начала акции вручную
+    const startDate = new Date("2025-05-28T00:00:00Z");
     const today = new Date();
 
-    const daysSinceStart = Math.floor((today - startDate) / (1000 * 60 * 60 * 24));
+    // Вычисляем номер текущего дня в акции
+    const msPerDay = 24 * 60 * 60 * 1000;
+    const daysSinceStart = Math.floor((today - startDate) / msPerDay);
 
     for (let i = 0; i < totalDays; i++) {
       const cell = document.createElement("div");
